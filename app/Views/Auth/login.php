@@ -138,7 +138,7 @@
                     </div>
 
                     <!-- Login form -->
-                    <form id="formAuthentication" class="mb-3" action="<?= $loginUrl ?>" method="POST">
+                    <form class="mb-3" action="<?= $loginUrl ?>" method="POST">
                         <div class="form-floating form-floating-outline mb-4">
                             <input
                                     type="email"
