@@ -1,0 +1,12 @@
+Options -Indexes
+RewriteEngine On
+
+# Redirect requests to index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [QSA,L]
+
+<Files .env>
+    Order allow,deny
+    Deny from all
+</Files>
