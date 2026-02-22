@@ -151,6 +151,59 @@ if (document.getElementById('layout-menu')) {
     // Active class on style switcher dropdown items
     const activeStyle = document.documentElement.getAttribute('data-style');
 
+    // Get style from local storage or use 'system' as default
+    let storedStyle =
+        localStorage.getItem('templateCustomizer-' + templateName + '--Style') || //if no template style then use Customizer style
+        (window.templateCustomizer?.settings?.defaultStyle ?? 'light'); //!if there is no Customizer then use default style as light
+
+    // Set style on click of style switcher item if template customizer is enabled
+    if (window.templateCustomizer && styleSwitcher) {
+        let styleSwitcherItems = [].slice.call(styleSwitcher.children[1].querySelectorAll('.dropdown-item'));
+        styleSwitcherItems.forEach(function (item) {
+            item.classList.remove('active');
+            item.addEventListener('click', function () {
+                let currentStyle = this.getAttribute('data-theme');
+                if (currentStyle === 'light') {
+                    window.templateCustomizer.setStyle('light');
+                } else if (currentStyle === 'dark') {
+                    window.templateCustomizer.setStyle('dark');
+                } else {
+                    window.templateCustomizer.setStyle('system');
+                }
+            });
+
+            if (item.getAttribute('data-theme') === activeStyle) {
+                // Add 'active' class to the item if it matches the activeStyle
+                item.classList.add('active');
+            }
+        });
+
+        // Update style switcher icon based on the stored style
+
+        const styleSwitcherIcon = styleSwitcher.querySelector('i');
+
+        if (storedStyle === 'light') {
+            styleSwitcherIcon.classList.add('ri-sun-line');
+            new bootstrap.Tooltip(styleSwitcherIcon, {
+                title: 'Light Mode',
+                fallbackPlacements: ['bottom']
+            });
+        } else if (storedStyle === 'dark') {
+            styleSwitcherIcon.classList.add('ri-moon-clear-line');
+            new bootstrap.Tooltip(styleSwitcherIcon, {
+                title: 'Dark Mode',
+                fallbackPlacements: ['bottom']
+            });
+        } else {
+            styleSwitcherIcon.classList.add('ri-computer-line');
+            new bootstrap.Tooltip(styleSwitcherIcon, {
+                title: 'System Mode',
+                fallbackPlacements: ['bottom']
+            });
+        }
+    }
+    // Run switchImage function based on the stored style
+    switchImage(storedStyle);
 
     // Internationalization (Language Dropdown)
     // ---------------------------------------
@@ -472,7 +525,178 @@ if (typeof $ !== 'undefined') {
             if ($('#layout-menu').hasClass('menu-horizontal')) {
                 var searchJson = 'search-horizontal.json'; // For vertical layout
             }
+            // Search API AJAX call
+            var searchData = $.ajax({
+                url: assetsPath + 'json/' + searchJson, //? Use your own search api instead
+                dataType: 'json',
+                async: false
+            }).responseJSON;
+            // Init typeahead on searchInput
+            searchInput.each(function () {
+                var $this = $(this);
+                searchInput
+                    .typeahead(
+                        {
+                            hint: false,
+                            classNames: {
+                                menu: 'tt-menu navbar-search-suggestion',
+                                cursor: 'active',
+                                suggestion: 'suggestion d-flex justify-content-between px-3 py-2 w-100'
+                            }
+                        },
+                        // ? Add/Update blocks as per need
+                        // Pages
+                        {
+                            name: 'pages',
+                            display: 'name',
+                            limit: 5,
+                            source: filterConfig(searchData.pages),
+                            templates: {
+                                header: '<h6 class="suggestions-header text-primary mb-0 mx-3 mt-3 pb-2">Pages</h6>',
+                                suggestion: function ({url, icon, name}) {
+                                    return (
+                                        '<a href="' +
+                                        url +
+                                        '">' +
+                                        '<div>' +
+                                        '<i class="' +
+                                        icon +
+                                        ' me-2"></i>' +
+                                        '<span class="align-middle">' +
+                                        name +
+                                        '</span>' +
+                                        '</div>' +
+                                        '</a>'
+                                    );
+                                },
+                                notFound:
+                                    '<div class="not-found px-3 py-2">' +
+                                    '<h6 class="suggestions-header text-primary mb-2">Pages</h6>' +
+                                    '<p class="py-2 mb-0"><i class="ri-warning-line me-2 ri-14px"></i> No Results Found</p>' +
+                                    '</div>'
+                            }
+                        },
+                        // Files
+                        {
+                            name: 'files',
+                            display: 'name',
+                            limit: 4,
+                            source: filterConfig(searchData.files),
+                            templates: {
+                                header: '<h6 class="suggestions-header text-primary mb-0 mx-3 mt-3 pb-2">Files</h6>',
+                                suggestion: function ({src, name, subtitle, meta}) {
+                                    return (
+                                        '<a href="javascript:;">' +
+                                        '<div class="d-flex w-50">' +
+                                        '<img class="me-3" src="' +
+                                        assetsPath +
+                                        src +
+                                        '" alt="' +
+                                        name +
+                                        '" height="32">' +
+                                        '<div class="w-75">' +
+                                        '<h6 class="mb-0">' +
+                                        name +
+                                        '</h6>' +
+                                        '<small class="text-muted">' +
+                                        subtitle +
+                                        '</small>' +
+                                        '</div>' +
+                                        '</div>' +
+                                        '<small class="text-muted">' +
+                                        meta +
+                                        '</small>' +
+                                        '</a>'
+                                    );
+                                },
+                                notFound:
+                                    '<div class="not-found px-3 py-2">' +
+                                    '<h6 class="suggestions-header text-primary mb-2">Files</h6>' +
+                                    '<p class="py-2 mb-0"><i class="ri-warning-line me-2 ri-14px"></i> No Results Found</p>' +
+                                    '</div>'
+                            }
+                        },
+                        // Members
+                        {
+                            name: 'members',
+                            display: 'name',
+                            limit: 4,
+                            source: filterConfig(searchData.members),
+                            templates: {
+                                header: '<h6 class="suggestions-header text-primary mb-0 mx-3 mt-3 pb-2">Members</h6>',
+                                suggestion: function ({name, src, subtitle}) {
+                                    return (
+                                        '<a href="app-user-view-account.html">' +
+                                        '<div class="d-flex align-items-center">' +
+                                        '<img class="rounded-circle me-3" src="' +
+                                        assetsPath +
+                                        src +
+                                        '" alt="' +
+                                        name +
+                                        '" height="32">' +
+                                        '<div class="user-info">' +
+                                        '<h6 class="mb-0">' +
+                                        name +
+                                        '</h6>' +
+                                        '<small class="text-muted">' +
+                                        subtitle +
+                                        '</small>' +
+                                        '</div>' +
+                                        '</div>' +
+                                        '</a>'
+                                    );
+                                },
+                                notFound:
+                                    '<div class="not-found px-3 py-2">' +
+                                    '<h6 class="suggestions-header text-primary mb-2">Members</h6>' +
+                                    '<p class="py-2 mb-0"><i class="ri-warning-line me-2 ri-14px"></i> No Results Found</p>' +
+                                    '</div>'
+                            }
+                        }
+                    )
+                    //On typeahead result render.
+                    .bind('typeahead:render', function () {
+                        // Show content backdrop,
+                        contentBackdrop.addClass('show').removeClass('fade');
+                    })
+                    // On typeahead select
+                    .bind('typeahead:select', function (ev, suggestion) {
+                        // Open selected page
+                        if (suggestion.url) {
+                            window.location = suggestion.url;
+                        }
+                    })
+                    // On typeahead close
+                    .bind('typeahead:close', function () {
+                        // Clear search
+                        searchInput.val('');
+                        $this.typeahead('val', '');
+                        // Hide search input wrapper
+                        searchInputWrapper.addClass('d-none');
+                        // Fade content backdrop
+                        contentBackdrop.addClass('fade').removeClass('show');
+                    });
 
+                // On searchInput keyup, Fade content backdrop if search input is blank
+                searchInput.on('keyup', function () {
+                    if (searchInput.val() == '') {
+                        contentBackdrop.addClass('fade').removeClass('show');
+                    }
+                });
+            });
+
+            // Init PerfectScrollbar in search result
+            var psSearch;
+            $('.navbar-search-suggestion').each(function () {
+                psSearch = new PerfectScrollbar($(this)[0], {
+                    wheelPropagation: false,
+                    suppressScrollX: true
+                });
+            });
+
+            searchInput.on('keyup', function () {
+                psSearch.update();
+            });
         }
     });
 }
