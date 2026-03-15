@@ -12,7 +12,7 @@ tech:
   - 'Alpine.js'
   - 'JavaScript'
   - 'HTML & CSS'
-live_url: 'https://your-live-url.com'
+live_url: 'https://project-tracker.munyira.co.ke/'
 github_url: 'https://github.com/jmunyira1/Project_Tracking'
 featured: false
 active: true
